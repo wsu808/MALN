@@ -1,77 +1,167 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Manga</title>
-    <style>
-        .grid-container {
-        }
-        .grid-item {
-            margin: 10px;
-            background-color: rgba(173, 216, 230, 0.5);
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-        }
-        .grid-item img {
-            max-width: 200px;
-            max-height: 300px;
-        }
-        .grid-item div {
-          color: black;
-          font-family: Arial, Helvetica, sans-serif;
-          font-variant: small-caps;
-          font-weight: bold;
-          margin: 1em;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search Manga</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/pure-min.css" integrity="sha384-X38yfunGUhNzHpBaEBsWLO+A0HDYOQi8ufWDkZ0k9e0eXz/tH3II7uKZ9msv++Ls" crossorigin="anonymous">
+  <style>
+    .search-bar {
+      margin: 10px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+    }
+    .list-item {
+      margin: 10px;
+      background-color: rgba(173, 216, 230, 0.5);
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      border-radius: 0 10px 10px 0;
+    }
+    .list-item img {
+      max-width: 25%;
+      max-height: 50vh;
+      aspect-ratio: 2/3;
+    }
+    .list-item div {
+      color: black;
+      font-family: Arial, Helvetica, sans-serif;
+      font-variant: small-caps;
+      font-weight: bold;
+      margin: 1em;
+    }
+    #pagination {
+      margin: 10px;
+    }
+    #pagination button {
+      margin: 0 auto;
+    }
+    #loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    @keyframes loading-spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-left: 4px solid #0078e7;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: loading-spin 1s linear infinite;
+    }
+  </style>
 </head>
 <body>
-    <input type="text" id="searchInput" placeholder="Enter manga name">
-    <button onclick="searchManga()">Search</button>
+  <div class="search-bar pure-form">
+    <input type="text" id="searchInput" placeholder="Enter light novel name" onkeypress="handleKeyPress(event)">
+    <button onclick="searchManga()" class="pure-button pure-button-primary">Search</button>
+  </div>
 
-    <div class="grid-container" id="results"></div>
+  <div class="list-container" id="results"></div>
 
-    <script>
-        async function searchManga() {
-            const query = document.getElementById("searchInput").value;
-            const url = `https://api.jikan.moe/v4/manga?q=${query}&type=lightnovel`;
+  <div id="pagination">
+    <button id="nextPageBtn" onclick="loadNextPage()" class="pure-button pure-button-primary" style="display: none;">Next Page</button>
+  </div>
 
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
+  <div id="loading">
+    <div class="loading-spinner"></div>
+  </div>
 
-                if (data && data.data && data.data.length > 0) {
-                    displayResults(data.data);
-                } else {
-                    document.getElementById("results").innerHTML = "No results found.";
-                }
-            } catch (error) {
-                console.error("Error fetching data:", error);
+  <script>
+    let currentPage = 1;
+
+    document.addEventListener("DOMContentLoaded", function() {
+      // Set focus on the input field when the page loads
+      document.getElementById("searchInput").focus();
+    });
+
+    function handleKeyPress(event) {
+      if (event.key === 'Enter') {
+        searchManga();
+      }
+    }
+
+    async function searchManga() {
+      currentPage = 1; // Reset current page when a new search is performed
+      await fetchData();
+    }
+
+    async function loadNextPage() {
+      currentPage++;
+      await fetchData();
+    }
+
+    async function fetchData() {
+      showLoading();
+      const query = document.getElementById("searchInput").value;
+      const url = `https://api.jikan.moe/v4/manga?q=${query}&type=lightnovel&page=${currentPage}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data && data.data && data.data.length > 0) {
+            displayResults(data.data);
+
+            const pagination = document.getElementById("pagination");
+            const nextPageBtn = document.getElementById("nextPageBtn");
+
+            if (data.pagination.has_next_page) {
+              nextPageBtn.style.display = "block";
+            } else {
+              nextPageBtn.style.display = "none";
             }
+        } else {
+            document.getElementById("results").innerHTML = "No results found.";
         }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+      hideLoading();
+    }
 
-        function displayResults(results) {
-            const resultsDiv = document.getElementById("results");
-            resultsDiv.innerHTML = "";
+    function displayResults(results) {
+      const resultsDiv = document.getElementById("results");
+      resultsDiv.innerHTML = "";
 
-            results.forEach(result => {
-                const gridItem = document.createElement("a");
-                gridItem.classList.add("grid-item");
-                gridItem.href = result.url;
+      results.forEach(result => {
+        const gridItem = document.createElement("a");
+        gridItem.classList.add("list-item");
+        gridItem.href = result.url;
+        gridItem.target = '_blank';
 
-                const coverImg = document.createElement("img");
-                coverImg.src = result.images.jpg.image_url;
+        const coverImg = document.createElement("img");
+        coverImg.src = result.images.jpg.image_url;
 
-                const title = document.createElement("div")
-                title.textContent = result.title;
+        const title = document.createElement("div")
+        title.textContent = result.title;
 
-                gridItem.appendChild(coverImg);
-                gridItem.appendChild(title);
-                resultsDiv.appendChild(gridItem);
-            });
-        }
-    </script>
+        gridItem.appendChild(coverImg);
+        gridItem.appendChild(title);
+        resultsDiv.appendChild(gridItem);
+      });
+    }
+
+    function showLoading() {
+      document.getElementById('loading').style.display = 'block';
+      console.log('srat')
+    }
+
+    function hideLoading() {
+      document.getElementById('loading').style.display = 'none';
+      console.log('stop')
+    }
+  </script>
 </body>
 </html>
