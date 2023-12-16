@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search Manga</title>
+    <style>
+        .grid-container {
+        }
+        .grid-item {
+            margin: 10px;
+            background-color: rgba(173, 216, 230, 0.5);
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+        .grid-item img {
+            max-width: 200px;
+            max-height: 300px;
+        }
+        .grid-item div {
+          color: black;
+          font-family: Arial, Helvetica, sans-serif;
+          font-variant: small-caps;
+          font-weight: bold;
+          margin: 1em;
+        }
+    </style>
+</head>
+<body>
+    <input type="text" id="searchInput" placeholder="Enter manga name">
+    <button onclick="searchManga()">Search</button>
+
+    <div class="grid-container" id="results"></div>
+
+    <script>
+        async function searchManga() {
+            const query = document.getElementById("searchInput").value;
+            const url = `https://api.jikan.moe/v4/manga?q=${query}&type=lightnovel`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data && data.data && data.data.length > 0) {
+                    displayResults(data.data);
+                } else {
+                    document.getElementById("results").innerHTML = "No results found.";
+                }
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        }
+
+        function displayResults(results) {
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = "";
+
+            results.forEach(result => {
+                const gridItem = document.createElement("a");
+                gridItem.classList.add("grid-item");
+                gridItem.href = result.url;
+
+                const coverImg = document.createElement("img");
+                coverImg.src = result.images.jpg.image_url;
+
+                const title = document.createElement("div")
+                title.textContent = result.title;
+
+                gridItem.appendChild(coverImg);
+                gridItem.appendChild(title);
+                resultsDiv.appendChild(gridItem);
+            });
+        }
+    </script>
+</body>
+</html>
