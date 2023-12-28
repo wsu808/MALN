@@ -12,9 +12,11 @@
       display: grid;
       grid-template-columns: 1fr auto;
     }
+
     .search-bar>*{
       height: 100%;
     }
+
     .list-item {
       margin: 10px;
       background-color: rgba(173, 216, 230, 0.5);
@@ -23,29 +25,47 @@
       text-decoration: none;
       border-radius: 0 10px 10px 0;
     }
+
     .list-item img {
       max-width: 25%;
       max-height: 50vh;
       aspect-ratio: 2/3;
     }
+
     .list-item li {
       color: black;
       font-family: Arial, Helvetica, sans-serif;
       font-variant: small-caps;
       font-weight: bold;
-      margin: 1em;
+      font-size: .6em;
+      color: gray;
+      margin-right: 10px;
     }
+
+    .list-item li:first-child {
+      font-size: .8em;
+      color: black;
+      margin-bottom: .5em;
+    }
+
     .list-item li::marker {
       content: '፨  ';
       font-size: 1.5em;
       line-height: 1.5em;
     }
+
+    .list-item li:first-child::marker {
+      content: '';
+    }
+
     #pagination {
       margin: 10px;
     }
+
     #pagination button {
       margin: 0 auto;
     }
+
     #loading {
       position: fixed;
       top: 50%;
@@ -95,6 +115,7 @@
     const q = urlParams.get('q');
     if (q) {
       const url = constructURL(q);
+      document.getElementById("searchInput").value = q;
       fetchData(url);
     }
 
